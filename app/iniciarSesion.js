@@ -2,7 +2,7 @@ import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/1
 import { auth } from "./firebase.js";
 
 const formIniciarSesion = $("#formIniciarSesion");
-import { showMessage } from "./showMessage.js";
+import { mostrarMensaje } from "./mostrarMensaje.js";
 
 formIniciarSesion.submit(async function(event) {
     // Evita que el formulario se envíe
@@ -28,18 +28,18 @@ formIniciarSesion.submit(async function(event) {
         //resetear el form
         formIniciarSesion.trigger('reset');
         //mostrar mensaje de bienvenida
-        showMessage("Bienvenido "+credencialesUsuario.user.email);
+        mostrarMensaje("Bienvenido "+credencialesUsuario.user.email);
 
 
 
     }catch(error){
         console.log("error")
         if (error.code === 'auth/wrong-password') {
-          showMessage("Password equivocado", "error")
+          mostrarMensaje("Password equivocado", "error")
         } else if (error.code === 'auth/user-not-found') {
-          showMessage("No se encuentra usuario", "error")
+          mostrarMensaje("No se encuentra usuario", "error")
         } else {
-          showMessage("Algo salio mal", "error") //si todo esta ok podrias cambiarlo como Tu email o pass estan equivocados
+          mostrarMensaje("Algo salio mal", "error") //si todo esta ok podrias cambiarlo como Tu email o pass estan equivocados
         }
     }
 

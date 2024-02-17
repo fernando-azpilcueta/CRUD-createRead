@@ -2,7 +2,7 @@
 import {createUserWithEmailAndPassword} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"
 
 import {auth} from "./firebase.js";
-import { showMessage } from "./showMessage.js";
+import { mostrarMensaje } from "./mostrarMensaje.js";
 
 const formCrearCuenta = $("#formCrearCuenta");
 
@@ -33,20 +33,20 @@ formCrearCuenta.submit(async function(event) {
         //resetear el form
         formCrearCuenta.trigger('reset');
         //mostrar mensaje de bienvenida
-        alert("Bienvenido "+credencialesUsuario.user.email);
+        mostrarMensaje("Bienvenido "+credencialesUsuario.user.email);
 
 
 
     }catch(error){
         console.log("error")
         if (error.code === 'auth/email-already-in-use') {
-            showMessage("Email en uso", "error")
+            mostrarMensaje("Email en uso", "error")
           } else if (error.code === 'auth/invalid-email') {
-            showMessage("Invalido email", "error")
+            mostrarMensaje("Invalido email", "error")
           } else if (error.code === 'auth/weak-password') {
-            showMessage("Password corto", "error")
+            mostrarMensaje("Password corto", "error")
           } else if (error.code) {
-            showMessage("Algo salio mal", "error")
+            mostrarMensaje("Algo salio mal", "error")
           }
     }
 

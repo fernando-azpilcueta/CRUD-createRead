@@ -1,4 +1,4 @@
-export function showMessage(message, type = "success") {
+export function mostrarMensaje(message, type = "success") {
     Toastify({
       text: message,
       duration: 3000,

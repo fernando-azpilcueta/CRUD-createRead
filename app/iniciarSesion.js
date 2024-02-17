@@ -28,7 +28,7 @@ formIniciarSesion.submit(async function(event) {
         //resetear el form
         formIniciarSesion.trigger('reset');
         //mostrar mensaje de bienvenida
-        alert("Bienvenido "+credencialesUsuario.user.email);
+        showMessage("Bienvenido "+credencialesUsuario.user.email);
 
 
 

@@ -3,7 +3,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import {getAuth} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js" 
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
 
-import {getFirestore, collection, addDoc, getDocs, onSnapshot} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import {getFirestore, collection, addDoc, getDocs, onSnapshot, deleteDoc, doc, updateDoc, getDoc} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -40,4 +40,16 @@ export function obtenerTareas() {
 
 export function actualizarObtenerTareas(callback) {
   return onSnapshot(collection(db, "tareas"), callback);
+}
+
+export function eliminarTarea(id) {
+  return deleteDoc(doc(db, "tareas", id));
+}
+
+export function obtenerTarea(id) {
+  return getDoc(doc(db, "tareas", id));
+}
+
+export function actualizarTarea(id, nuevosCampos) {
+  return updateDoc(doc(db, "tareas", id), nuevosCampos);
 }

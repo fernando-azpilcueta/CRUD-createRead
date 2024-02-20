@@ -108,7 +108,7 @@ formTareas.submit(function (e) {
       formTareas.find('#btn-task-form').text('Guardar');
 
   }else{
-    guardarTarea(titulo, descripcion, userGlobal.email);
+    guardarTarea(tituloF, descripcionF, userGlobal.email);
   }   
 
     formTareas.trigger('reset');

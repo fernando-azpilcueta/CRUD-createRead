@@ -59,17 +59,17 @@ auth.onAuthStateChanged(async function (user) {
 
       //ACCION EDITAR
 
-      const btnsEditar = $(".btn-editar");
-      btnsEditar.each(function () {
+      const btnsEditar = $(".btn-editar"); // En la constante btnsEditar se guarda 
+      btnsEditar.each(function () { //con cada uno de los botones editar quiero que hagas lo siguiente
         $(this).on('click', async function (event) {
           const doc = await obtenerTarea($(this).data("id"));
-          const tarea = doc.data();
-          const taskForm2 = $("#form-tareas");
-          taskForm2.find('#titulo-tarea').val(tarea.titulo);
-          taskForm2.find('#descripcion-tarea').val(tarea.descripcion);
-          estadoEditar = true;
+          const tarea = doc.data(); //me va a obtener toda la info de la tarea (titulo, descripcion) y lo va a guardar en la constante "tarea"
+          const taskForm2 = $("#form-tareas"); //Dentro de taskForm2 se guardará el forms de las tareas 
+          taskForm2.find('#titulo-tarea').val(tarea.titulo); //Se coloca el titulo de la tarea en el input del forms
+          taskForm2.find('#descripcion-tarea').val(tarea.descripcion); ////Se coloca la descrip de la tarea en el input del forms
+          estadoEditar = true; //se esta editando
           id = doc.id;
-          taskForm2.find('#btn-task-form').text('Update');
+          taskForm2.find('#btn-task-form').text('Modificar');
         });
       });
 
@@ -97,7 +97,7 @@ formTareas.submit(function (e) {
 
   if (userGlobal) {
 
-    if(estadoEditar){
+    if(estadoEditar){ //se evalua si estamos en modo editar
       actualizarTarea(id, {
         titulo: tituloF,
         descripcion: descripcionF,
@@ -105,7 +105,7 @@ formTareas.submit(function (e) {
       });
       estadoEditar = false;
       id = "";
-      formTareas.find('#btn-task-form').text('Guardar');
+      formTareas.find('#btn-task-form').text('Guardar'); //que el boton diga guardar denuevo
 
   }else{
     guardarTarea(tituloF, descripcionF, userGlobal.email);

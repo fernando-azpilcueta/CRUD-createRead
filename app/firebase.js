@@ -30,8 +30,8 @@ export const auth = getAuth(app);
 
 export const db = getFirestore();
 
-export function guardarTarea(titulo, descripcion, email) {
-  addDoc(collection(db, "tareas"), { titulo, descripcion, email });
+export function guardarTarea(titulo, descripcion, email,fechaCreacion) {
+  addDoc(collection(db, "tareas"), { titulo, descripcion, email,fechaCreacion });
 }
 
 export function obtenerTareas() {

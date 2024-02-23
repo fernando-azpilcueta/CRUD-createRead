@@ -1,5 +1,5 @@
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"
-import { auth, actualizarObtenerTareas, eliminarTarea, actualizarTarea, obtenerTarea} from "./app/firebase.js";
+import { auth, actualizarObtenerTareas, eliminarTarea, actualizarTarea, obtenerTarea } from "./app/firebase.js";
 
 import './app/crearCuenta.js'
 import './app/iniciarSesion.js'
@@ -7,6 +7,7 @@ import './app/cerrarSesion.js'
 import { verificarSesion } from './app/verificarSesion.js'
 import { mostrarContenidoVacio } from './app/mostrarContenido.js';
 import { mostrarContenido } from './app/mostrarContenido.js';
+import { mostrarMensaje } from "./app/mostrarMensaje.js";
 
 import { guardarTarea } from "./app/firebase.js";
 
@@ -23,15 +24,23 @@ auth.onAuthStateChanged(async function (user) {
 
     actualizarObtenerTareas(querySnapshot => {
       let html = '';
-
+      let html2 = '';
       querySnapshot.forEach(function (doc) {
-        const task = doc.data();
+        const tarea = doc.data();
 
-        if (task.email == correo) {
+        if (tarea.email == correo) {
+          const fecha = tarea.fechaCreacion.toDate();
+          const anio = fecha.getFullYear();
+          const mes = fecha.getMonth() + 1; // Se suma 1 ya que los meses van de 0 a 11
+          const dia = fecha.getDate();
+          const hora = fecha.getHours();
+          const minutos = fecha.getMinutes();
+          const segundos = fecha.getSeconds();
           html += `
                     <li class="list-group-item list-group-item-action mt-2">
-                      <h5>${task.titulo}</h5>
-                      <p>${task.descripcion}</p>
+                      <h5>${tarea.titulo}</h5>
+                      <p><i>${"Creado el día "+dia+"/"+mes+"/"+anio+" a las "+hora+":"+minutos+":"+segundos}</i></p>
+                      <p>${tarea.descripcion}</p>
                       <div>
                         <button class="btn btn-primary btn-eliminar" data-id="${doc.id}">
                           Delete
@@ -45,7 +54,38 @@ auth.onAuthStateChanged(async function (user) {
         }
       });
 
+      querySnapshot.forEach(function (doc) {
+        const tarea = doc.data();
+
+        if (tarea.email != correo) {
+          const fecha = tarea.fechaCreacion.toDate();
+          const anio = fecha.getFullYear();
+          const mes = fecha.getMonth() + 1; // Se suma 1 ya que los meses van de 0 a 11
+          const dia = fecha.getDate();
+          const hora = fecha.getHours();
+          const minutos = fecha.getMinutes();
+          const segundos = fecha.getSeconds();
+          html2 += `
+                    <li class="list-group-item list-group-item-action mt-2">
+                      <h5>${tarea.titulo}</h5>
+                      <p><i>${"Creado el día "+dia+"/"+mes+"/"+anio+" a las "+hora+":"+minutos+":"+segundos}</i></p>
+                      <h6>${tarea.email}</h6>
+                      <p>${tarea.descripcion}</p>
+                      <div>
+                        <button class="btn btn-primary btn-eliminar" data-id="">
+                          Like
+                        </button>
+                        <button class="btn btn-secondary btn-editar" data-id="">
+                          Comentar
+                        </button>
+                      </div>
+                    </li>
+                  `;
+        }
+      });
+
       contenedorTareas.html(html);
+      contenedorTareasTodas.html(html2);
 
       //ACCION ELIMINAR
 
@@ -75,13 +115,15 @@ auth.onAuthStateChanged(async function (user) {
 
     });
 
-    const contenedorTareas = $("#contenedor-tareas");
+    const contenedorTareas = $("#contenedor-tareas-mias");
+    const contenedorTareasTodas = $("#contenedor-tareas-todas");
   } else {
     console.log("sin sesion")
 
-    const contenedorTareas = $("#contenedor-tareas");
+    const contenedorTareas = $("#contenedor-tareas-mias");
+    const contenedorTareasTodas = $("#contenedor-tareas-todas");
     contenedorTareas.html('<h3 class="text-white">Inicia sesión para ver tus publicaciones</h3>');
-
+    contenedorTareasTodas.html('');
     //mostrarContenidoVacio();
     verificarSesion(user);
   }
@@ -92,24 +134,26 @@ formTareas.submit(function (e) {
 
   var tituloF = formTareas.find("#titulo-tarea").val();
   var descripcionF = formTareas.find("#descripcion-tarea").val();
-
-
+  var fechaCreacionF = new Date(); // crear fecha actual
+  console.log(fechaCreacionF)
 
   if (userGlobal) {
 
-    if(estadoEditar){ //se evalua si estamos en modo editar
+    if (estadoEditar) { //se evalua si estamos en modo editar
       actualizarTarea(id, {
         titulo: tituloF,
         descripcion: descripcionF,
-        email: userGlobal.email
+        email: userGlobal.email,
+
       });
       estadoEditar = false;
       id = "";
       formTareas.find('#btn-task-form').text('Guardar'); //que el boton diga guardar denuevo
 
-  }else{
-    guardarTarea(tituloF, descripcionF, userGlobal.email);
-  }   
+    } else {
+      guardarTarea(tituloF, descripcionF, userGlobal.email, fechaCreacionF);
+      mostrarMensaje("¡Nueva publicación creada!");
+    }
 
     formTareas.trigger('reset');
   }

@@ -1,7 +1,7 @@
 
 import {createUserWithEmailAndPassword} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"
 
-import {auth} from "./firebase.js";
+import {auth, guardarPerfil} from "./firebase.js";
 import { mostrarMensaje } from "./mostrarMensaje.js";
 
 const formCrearCuenta = $("#formCrearCuenta");
@@ -14,16 +14,27 @@ formCrearCuenta.submit(async function(event) {
     
     // Realiza cualquier acción necesaria aquí
 
-    console.log(formCrearCuenta);
+    //console.log(formCrearCuenta);
+
+    //correo y contra (para crear cuenta con Authentication de Firebase)
     var correo = formCrearCuenta.find('#correoCrearCuenta').val();
     var contra = formCrearCuenta.find('#contraCrearCuenta').val();
-    console.log(correo);
-    console.log(contra);
+
+    //demas campos para crear el perfil con los datos del usuario
+
+    var nombres = formCrearCuenta.find('#nombresCrearCuenta').val();
+    var apellidos = formCrearCuenta.find('#apellidosCrearCuenta').val();
+    var edad = formCrearCuenta.find('#edadCrearCuenta').val();
+    var sexo = formCrearCuenta.find('#sexoCrearCuenta').val();
     
 
     try{
+        //Crear nueva cuenta en Authentication
         const credencialesUsuario = await createUserWithEmailAndPassword(auth,correo,contra);
-        console.log(credencialesUsuario);
+        //Crear nuevo perfil de la cuenta en Firestore
+        guardarPerfil(nombres,apellidos,edad,sexo,correo);
+
+
 
         //Cerrar modal de crear cuenta
         const modalCrearCuenta = $("#modalCrearCuenta");
@@ -33,7 +44,7 @@ formCrearCuenta.submit(async function(event) {
         //resetear el form
         formCrearCuenta.trigger('reset');
         //mostrar mensaje de bienvenida
-        mostrarMensaje("Bienvenido "+credencialesUsuario.user.email);
+        mostrarMensaje("Bienvenido "+nombres);
 
 
 

@@ -1,5 +1,5 @@
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"
-import { auth, actualizarObtenerTareas, eliminarTarea, actualizarTarea, obtenerTarea } from "./app/firebase.js";
+import { auth, actualizarObtenerTareas, eliminarTarea, actualizarTarea, obtenerTarea, obtenerPerfil } from "./app/firebase.js";
 
 import './app/crearCuenta.js'
 import './app/iniciarSesion.js'
@@ -15,16 +15,22 @@ const formTareas = $("#form-tareas");
 let userGlobal;
 let estadoEditar = false;
 let id = '';
+
 auth.onAuthStateChanged(async function (user) {
   if (user) {
     userGlobal = user;
     verificarSesion(user);
     const correo = user.email;
-    console.log("sesion iniciada");
+
+
+
 
     actualizarObtenerTareas(querySnapshot => {
-      let html = '';
-      let html2 = '';
+
+      
+
+      let html = ''
+     let html2 = ''
       querySnapshot.forEach(function (doc) {
         const tarea = doc.data();
 
@@ -36,17 +42,19 @@ auth.onAuthStateChanged(async function (user) {
           const hora = fecha.getHours();
           const minutos = fecha.getMinutes();
           const segundos = fecha.getSeconds();
-          html += `
+          html +=`
                     <li class="list-group-item list-group-item-action mt-2">
                       <h5>${tarea.titulo}</h5>
-                      <p><i>${"Creado el día "+dia+"/"+mes+"/"+anio+" a las "+hora+":"+minutos+":"+segundos}</i></p>
+                      
                       <p>${tarea.descripcion}</p>
+                      <p class="text-end"><i>${"Creado el día " + dia + "/" + mes + "/" + anio + " a las " + hora + ":" + minutos + ":" + segundos}</i></p>
+                      
                       <div>
-                        <button class="btn btn-primary btn-eliminar" data-id="${doc.id}">
-                          Delete
+                        <button class="btn btn-secondary btn-editar bi bi-pencil" data-id="${doc.id}">
+                          Editar
                         </button>
-                        <button class="btn btn-secondary btn-editar" data-id="${doc.id}">
-                          Edit
+                        <button class="btn btn-danger btn-eliminar bi bi-trash3" data-id="${doc.id}">
+                          Eliminar
                         </button>
                       </div>
                     </li>
@@ -54,10 +62,11 @@ auth.onAuthStateChanged(async function (user) {
         }
       });
 
-      querySnapshot.forEach(function (doc) {
+      querySnapshot.forEach(async function (doc) {
         const tarea = doc.data();
 
         if (tarea.email != correo) {
+
           const fecha = tarea.fechaCreacion.toDate();
           const anio = fecha.getFullYear();
           const mes = fecha.getMonth() + 1; // Se suma 1 ya que los meses van de 0 a 11
@@ -65,27 +74,51 @@ auth.onAuthStateChanged(async function (user) {
           const hora = fecha.getHours();
           const minutos = fecha.getMinutes();
           const segundos = fecha.getSeconds();
-          html2 += `
-                    <li class="list-group-item list-group-item-action mt-2">
-                      <h5>${tarea.titulo}</h5>
-                      <p><i>${"Creado el día "+dia+"/"+mes+"/"+anio+" a las "+hora+":"+minutos+":"+segundos}</i></p>
-                      <h6>${tarea.email}</h6>
-                      <p>${tarea.descripcion}</p>
-                      <div>
-                        <button class="btn btn-primary btn-eliminar" data-id="">
-                          Like
-                        </button>
-                        <button class="btn btn-secondary btn-editar" data-id="">
-                          Comentar
-                        </button>
+
+          console.log(tarea.email)
+
+
+          //const perfil = await obtenerPerfil(tarea.email);
+
+
+          //console.log(perfil);
+
+          html2 +=`
+                      
+                      <li class="list-group-item list-group-item-action mt-2 d-flex flex-column">
+                      <div class="d-flex justify-content-between">
+                      <label class="nombreUsuarios" data-id=""><b>${tarea.email}</b> publicó:</label>
+                      
+                      <button class="btn-otroPerfil btn btn-primary bi bi-person-square" data-id="${tarea.email}" data-bs-toggle="modal" data-bs-target="#modalPerfil"> 
+                      Ver perfil
+                      </button>
                       </div>
-                    </li>
-                  `;
+                      <div class="border mt-2"></div>
+                        <h5>${tarea.titulo}</h5>
+                        <p>${tarea.descripcion}</p>
+                        
+                        <p class="text-end"><i>${"Publicado el día " + dia + "/" + mes + "/" + anio + " a las " + hora + ":" + minutos + ":" + segundos}</b></i></p>
+                        
+                        <div>
+                          <button class="btn btn-primary btn-eliminar" data-id="">
+                            Like
+                          </button>
+                          <button class="btn btn-secondary btn-editar" data-id="">
+                            Comentar
+                          </button>
+                          
+                        </div>
+                      </li>
+          `;
+
+
+
+
         }
       });
+      contenedorTareasMias.html(html)
+      contenedorTareasTodas.html(html2)
 
-      contenedorTareas.html(html);
-      contenedorTareasTodas.html(html2);
 
       //ACCION ELIMINAR
 
@@ -113,10 +146,28 @@ auth.onAuthStateChanged(async function (user) {
         });
       });
 
+
+      //ACCION MOSTRAR PERFIL
+
+
+      const btnsOtroPerfil = $('.btn-otroPerfil');
+      console.log(btnsOtroPerfil)
+      btnsOtroPerfil.each(function () {
+        $(this).click(async function () {
+          llenarModalPerfil(await obtenerPerfil($(this).data('id')))
+        });
+      });
+
+
+    
+
     });
 
-    const contenedorTareas = $("#contenedor-tareas-mias");
+    const contenedorTareasMias = $("#contenedor-tareas-mias");
     const contenedorTareasTodas = $("#contenedor-tareas-todas");
+
+
+
   } else {
     console.log("sin sesion")
 
@@ -158,4 +209,22 @@ formTareas.submit(function (e) {
     formTareas.trigger('reset');
   }
 });
+
+
+//LLENAR MODAL DE PERFIL
+function llenarModalPerfil(perfil) {
+
+  $("#tituloCard").html("Perfil");
+  $("#nombresCard").html("Nombre: " + perfil.nombres);
+  $("#apellidosCard").html("Apellidos: " + perfil.apellidos);
+  $("#edadCard").html("Edad: " + perfil.edad);
+  $("#sexoCard").html("Sexo: " + perfil.sexo);
+}
+
+
+//EVENTO PARA VER MI PERFIL
+$("#botonPerfil").click(async function () {
+  llenarModalPerfil(await obtenerPerfil(userGlobal.email));
+});
+
 

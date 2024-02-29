@@ -3,7 +3,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import {getAuth} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js" 
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
 
-import {getFirestore, collection, addDoc, getDocs, onSnapshot, deleteDoc, doc, updateDoc, getDoc, query, where} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import {getFirestore, collection, addDoc, getDocs, onSnapshot, deleteDoc, doc, updateDoc, getDoc, query, where, orderBy, FieldValue} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -33,8 +33,8 @@ export const db = getFirestore();
 // COLECTION: TAREAS
 
 //Guardar una tarea nueva en Firebase
-export function guardarTarea(titulo, descripcion, email,fechaCreacion) {
-  addDoc(collection(db, "tareas"), { titulo, descripcion, email,fechaCreacion });
+export function guardarTarea(titulo, descripcion, email,fechaCreacion,cantComentarios) {
+  addDoc(collection(db, "tareas"), { titulo, descripcion, email,fechaCreacion,cantComentarios});
 }
 //Obtener todas las tareas guardadas en Firebase
 export function obtenerTareas() {
@@ -70,3 +70,23 @@ export async function obtenerPerfil(email){
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs[0].data();
 }
+
+//COLECTION: COMENTARIOS
+
+export function guardarComentario(texto,fechaCreacion,idTarea,email) {
+
+  addDoc(collection(db, "comentarios"), { texto,fechaCreacion,idTarea,email});
+  
+ 
+}
+
+export async function obtenerComentarios(idTarea){
+  
+  const q = query(collection(db, "comentarios"), where("idTarea", "==", idTarea));
+  
+  const querySnapshot = await getDocs(q);
+  console.log('holi')
+  return querySnapshot.docs.map(doc => doc.data());
+}
+
+

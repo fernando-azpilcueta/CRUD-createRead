@@ -1,5 +1,5 @@
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"
-import { auth, actualizarObtenerTareas, eliminarTarea, actualizarTarea, obtenerTarea, obtenerPerfil } from "./app/firebase.js";
+import { auth, actualizarObtenerTareas, eliminarTarea, actualizarTarea, obtenerTarea, obtenerPerfil, guardarComentario, obtenerComentarios} from "./app/firebase.js";
 
 import './app/crearCuenta.js'
 import './app/iniciarSesion.js'
@@ -27,10 +27,10 @@ auth.onAuthStateChanged(async function (user) {
 
     actualizarObtenerTareas(querySnapshot => {
 
-      
+
 
       let html = ''
-     let html2 = ''
+      let html2 = ''
       querySnapshot.forEach(function (doc) {
         const tarea = doc.data();
 
@@ -42,7 +42,7 @@ auth.onAuthStateChanged(async function (user) {
           const hora = fecha.getHours();
           const minutos = fecha.getMinutes();
           const segundos = fecha.getSeconds();
-          html +=`
+          html += `
                     <li class="list-group-item list-group-item-action mt-2">
                       <h5>${tarea.titulo}</h5>
                       
@@ -56,8 +56,34 @@ auth.onAuthStateChanged(async function (user) {
                         <button class="btn btn-danger btn-eliminar bi bi-trash3" data-id="${doc.id}">
                           Eliminar
                         </button>
+                        <button class="btn btn-secondary btn-verComentarios" data-id="${doc.id}">
+                            Comentar
+                          </button>
+                          <label>${tarea.cantComentarios} comentario(s)</label>
                       </div>
+
                     </li>
+
+                    <li id="${doc.id}" class="list-group-item list-group-item-action mt-2 li-comentario" data-id="" style="display: none">
+                      <h4>COMENTARIOS</h4>
+                      <div id="contenedor${doc.id}">
+                        
+                        
+                      </div>
+                      
+                      <form id="${doc.id}" class="formComentario">
+                      <div class="mb-3">
+                        <label for="comentario" class="form-label">Haz un comentario: </label>
+                        <textArea type="text" class="form-control" id="texto-comentario" aria-describedby="emailHelp"></textArea>
+                        
+                      </div>
+                      
+                      <button type="submit" class="btn btn-primary btn-comentar">Comentar</button>
+                    </form>
+                    
+                    </li>
+
+
                   `;
         }
       });
@@ -75,7 +101,7 @@ auth.onAuthStateChanged(async function (user) {
           const minutos = fecha.getMinutes();
           const segundos = fecha.getSeconds();
 
-          console.log(tarea.email)
+
 
 
           //const perfil = await obtenerPerfil(tarea.email);
@@ -83,7 +109,7 @@ auth.onAuthStateChanged(async function (user) {
 
           //console.log(perfil);
 
-          html2 +=`
+          html2 += `
                       
                       <li class="list-group-item list-group-item-action mt-2 d-flex flex-column">
                       <div class="d-flex justify-content-between">
@@ -100,15 +126,35 @@ auth.onAuthStateChanged(async function (user) {
                         <p class="text-end"><i>${"Publicado el día " + dia + "/" + mes + "/" + anio + " a las " + hora + ":" + minutos + ":" + segundos}</b></i></p>
                         
                         <div>
-                          <button class="btn btn-primary btn-eliminar" data-id="">
+                          <button class="btn btn-primary btn-like" data-id="">
                             Like
                           </button>
-                          <button class="btn btn-secondary btn-editar" data-id="">
+                          <button class="btn btn-secondary btn-verComentarios" data-id="${doc.id}">
                             Comentar
                           </button>
+                          <label>${tarea.cantComentarios} comentario(s)</label>
                           
                         </div>
                       </li>
+
+                      <li id="${doc.id}" class="list-group-item list-group-item-action mt-2 li-comentario" data-id="" style="display: none">
+                      <h4>COMENTARIOS</h4>
+                      <div id="contenedor${doc.id}">
+                        
+                        
+                      </div>
+                      
+                      <form id="${doc.id}" class="formComentario">
+                      <div class="mb-3">
+                        <label for="comentario" class="form-label">Haz un comentario: </label>
+                        <textArea type="text" class="form-control" id="texto-comentario" aria-describedby="emailHelp"></textArea>
+                        
+                      </div>
+                      
+                      <button type="submit" class="btn btn-primary btn-comentar">Comentar</button>
+                    </form>
+                    
+                    </li>
           `;
 
 
@@ -151,7 +197,7 @@ auth.onAuthStateChanged(async function (user) {
 
 
       const btnsOtroPerfil = $('.btn-otroPerfil');
-      console.log(btnsOtroPerfil)
+
       btnsOtroPerfil.each(function () {
         $(this).click(async function () {
           llenarModalPerfil(await obtenerPerfil($(this).data('id')))
@@ -159,7 +205,110 @@ auth.onAuthStateChanged(async function (user) {
       });
 
 
-    
+      //ACCION VER COMENTARIOS
+
+
+
+      const btnsVerComentarios = $(".btn-verComentarios");
+
+      btnsVerComentarios.each(function () {
+       
+
+        $(this).click(async function () {
+          
+          
+          let idTarea = $(this).data('id');
+          $("#contenedor" + idTarea).html('');
+          const cuadro = $("#" + idTarea);
+
+          if (cuadro.css("display") == "block") {
+            cuadro.css("display", "none");
+          }
+          else {
+            cuadro.css("display", "block");
+          }
+
+          
+          console.log(idTarea)
+          const comentarios = await obtenerComentarios(idTarea);
+          if (comentarios) {
+            //console.log(comentarios);
+
+            
+            comentarios.forEach(function (comentario) {
+
+              const fecha = comentario.fechaCreacion.toDate();
+              const anio = fecha.getFullYear();
+              const mes = fecha.getMonth() + 1; // Se suma 1 ya que los meses van de 0 a 11
+              const dia = fecha.getDate();
+              const hora = fecha.getHours();
+              const minutos = fecha.getMinutes();
+              const segundos = fecha.getSeconds();
+
+              //console.log(comentario.texto)
+              $("#contenedor" + idTarea).append(`
+              <p><b>${comentario.email}</b></p>
+              <h5>${comentario.texto}</h5>
+              <p>${"Publicado el día " + dia + "/" + mes + "/" + anio + " a las " + hora + ":" + minutos + ":" + segundos}</p>
+              <div class="border mt-2"></div>`);
+            });
+
+
+
+          }
+
+          
+        });
+
+      });
+
+      //ACCION COMENTAR
+
+      const formsComentario = $(".formComentario");
+
+      formsComentario.each(function () {
+        $(this).submit(async function (e) {
+          e.preventDefault();
+          var textoComentario = $(this).find("#texto-comentario").val();
+          var fechaCreacionF = new Date(); // crear fecha actual
+          var idTarea = $(this).attr("id");
+
+          if (userGlobal) {
+            guardarComentario(textoComentario, fechaCreacionF, idTarea, userGlobal.email);
+            
+           
+           
+            const comentarios = await obtenerComentarios(idTarea);
+          if (comentarios) {
+            //console.log(comentarios);
+
+            $("#contenedor" + idTarea).html('');
+            comentarios.forEach(function (comentario) {
+
+              const fecha = comentario.fechaCreacion.toDate();
+              const anio = fecha.getFullYear();
+              const mes = fecha.getMonth() + 1; // Se suma 1 ya que los meses van de 0 a 11
+              const dia = fecha.getDate();
+              const hora = fecha.getHours();
+              const minutos = fecha.getMinutes();
+              const segundos = fecha.getSeconds();
+
+              //console.log(comentario.texto)
+              $("#contenedor" + idTarea).append(`
+              <p><b>${comentario.email}</b></p>
+              <h5>${comentario.texto}</h5>
+              <p>${"Publicado el día " + dia + "/" + mes + "/" + anio + " a las " + hora + ":" + minutos + ":" + segundos}</p>
+              <div class="border mt-2"></div>`);
+            });
+
+
+
+          }
+            $(this).trigger('reset');
+          }
+        });
+      });
+
 
     });
 
@@ -186,6 +335,7 @@ formTareas.submit(function (e) {
   var tituloF = formTareas.find("#titulo-tarea").val();
   var descripcionF = formTareas.find("#descripcion-tarea").val();
   var fechaCreacionF = new Date(); // crear fecha actual
+  var cantComentarios=0;
   console.log(fechaCreacionF)
 
   if (userGlobal) {
@@ -202,7 +352,7 @@ formTareas.submit(function (e) {
       formTareas.find('#btn-task-form').text('Guardar'); //que el boton diga guardar denuevo
 
     } else {
-      guardarTarea(tituloF, descripcionF, userGlobal.email, fechaCreacionF);
+      guardarTarea(tituloF, descripcionF, userGlobal.email, fechaCreacionF,cantComentarios);
       mostrarMensaje("¡Nueva publicación creada!");
     }
 
@@ -226,5 +376,18 @@ function llenarModalPerfil(perfil) {
 $("#botonPerfil").click(async function () {
   llenarModalPerfil(await obtenerPerfil(userGlobal.email));
 });
+
+/*const formComentario = $("#formComentario");
+formComentario.submit(function (e){
+  e.preventDefault();
+  var textoComentario = formComentario.find("#texto-comentario").val();
+  var fechaCreacionF = new Date(); // crear fecha actual
+
+  if (userGlobal) {
+    guardarComentario(textoComentario,fechaCreacionF,$());
+    formComentario.trigger('reset');
+  }
+
+});*/
 
 

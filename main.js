@@ -1,5 +1,5 @@
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"
-import { auth, actualizarObtenerTareas, eliminarTarea, actualizarTarea, obtenerTarea } from "./app/firebase.js";
+import { auth, actualizarObtenerTareas, eliminarTarea, actualizarTarea, obtenerTarea, obtenerPerfil, guardarComentario, obtenerComentarios } from "./app/firebase.js";
 
 import './app/crearCuenta.js'
 import './app/iniciarSesion.js'
@@ -15,16 +15,23 @@ const formTareas = $("#form-tareas");
 let userGlobal;
 let estadoEditar = false;
 let id = '';
+let cantComentGlobal = 0;
+
 auth.onAuthStateChanged(async function (user) {
   if (user) {
     userGlobal = user;
     verificarSesion(user);
     const correo = user.email;
-    console.log("sesion iniciada");
+
+
+
 
     actualizarObtenerTareas(querySnapshot => {
-      let html = '';
-      let html2 = '';
+
+
+
+      let html = ''
+      let html2 = ''
       querySnapshot.forEach(function (doc) {
         const tarea = doc.data();
 
@@ -39,25 +46,37 @@ auth.onAuthStateChanged(async function (user) {
           html += `
                     <li class="list-group-item list-group-item-action mt-2">
                       <h5>${tarea.titulo}</h5>
-                      <p><i>${"Creado el día "+dia+"/"+mes+"/"+anio+" a las "+hora+":"+minutos+":"+segundos}</i></p>
+                      
                       <p>${tarea.descripcion}</p>
+                      <p class="text-end"><i>${"Creado el día " + dia + "/" + mes + "/" + anio + " a las " + hora + ":" + minutos + ":" + segundos}</i></p>
+                      
                       <div>
-                        <button class="btn btn-primary btn-eliminar" data-id="${doc.id}">
-                          Delete
+                        <button class="btn btn-secondary btn-editar bi bi-pencil" data-id="${doc.id}">
+                          Editar
                         </button>
-                        <button class="btn btn-secondary btn-editar" data-id="${doc.id}">
-                          Edit
+                        <button class="btn btn-danger btn-eliminar bi bi-trash3" data-id="${doc.id}">
+                          Eliminar
                         </button>
+                        <button class="btn btn-secondary btn-verComentarios" data-id="${doc.id}" data-bs-toggle="modal" data-bs-target="#modalComentarios">
+                            Comentar
+                          </button>
+                          <label>${tarea.cantComentarios} comentario(s)</label>
                       </div>
+
                     </li>
+
+                    
+
+
                   `;
         }
       });
 
-      querySnapshot.forEach(function (doc) {
+      querySnapshot.forEach(async function (doc) {
         const tarea = doc.data();
 
         if (tarea.email != correo) {
+
           const fecha = tarea.fechaCreacion.toDate();
           const anio = fecha.getFullYear();
           const mes = fecha.getMonth() + 1; // Se suma 1 ya que los meses van de 0 a 11
@@ -65,27 +84,54 @@ auth.onAuthStateChanged(async function (user) {
           const hora = fecha.getHours();
           const minutos = fecha.getMinutes();
           const segundos = fecha.getSeconds();
+
+
+
+
+          //const perfil = await obtenerPerfil(tarea.email);
+
+
+          //console.log(perfil);
+
           html2 += `
-                    <li class="list-group-item list-group-item-action mt-2">
-                      <h5>${tarea.titulo}</h5>
-                      <p><i>${"Creado el día "+dia+"/"+mes+"/"+anio+" a las "+hora+":"+minutos+":"+segundos}</i></p>
-                      <h6>${tarea.email}</h6>
-                      <p>${tarea.descripcion}</p>
-                      <div>
-                        <button class="btn btn-primary btn-eliminar" data-id="">
-                          Like
-                        </button>
-                        <button class="btn btn-secondary btn-editar" data-id="">
-                          Comentar
-                        </button>
+                      
+                      <li class="list-group-item list-group-item-action mt-2 d-flex flex-column">
+                      <div class="d-flex justify-content-between">
+                      <label class="nombreUsuarios" data-id=""><b>${tarea.email}</b> publicó:</label>
+                      
+                      <button class="btn-otroPerfil btn btn-primary bi bi-person-square" data-id="${tarea.email}" data-bs-toggle="modal" data-bs-target="#modalPerfil"> 
+                      Ver perfil
+                      </button>
                       </div>
-                    </li>
-                  `;
+                      <div class="border mt-2"></div>
+                        <h5>${tarea.titulo}</h5>
+                        <p>${tarea.descripcion}</p>
+                        
+                        <p class="text-end"><i>${"Publicado el día " + dia + "/" + mes + "/" + anio + " a las " + hora + ":" + minutos + ":" + segundos}</b></i></p>
+                        
+                        <div>
+                          <button class="btn btn-primary btn-like" data-id="">
+                            Like
+                          </button>
+                          <button class="btn btn-secondary btn-verComentarios" data-id="${doc.id}" data-bs-toggle="modal" data-bs-target="#modalComentarios">
+                            Comentar
+                          </button>
+                          <label>${tarea.cantComentarios} comentario(s)</label>
+                          
+                        </div>
+                      </li>
+
+                      
+          `;
+
+
+
+
         }
       });
+      contenedorTareasMias.html(html)
+      contenedorTareasTodas.html(html2)
 
-      contenedorTareas.html(html);
-      contenedorTareasTodas.html(html2);
 
       //ACCION ELIMINAR
 
@@ -113,10 +159,74 @@ auth.onAuthStateChanged(async function (user) {
         });
       });
 
+
+      //ACCION MOSTRAR PERFIL
+
+
+      const btnsOtroPerfil = $('.btn-otroPerfil');
+
+      btnsOtroPerfil.each(function () {
+        $(this).click(async function () {
+          llenarModalPerfil(await obtenerPerfil($(this).data('id')))
+        });
+      });
+
+
+      const btnsVerComentarios = $(".btn-verComentarios");
+
+btnsVerComentarios.each(function () {
+
+
+  $(this).click(async function () {
+
+    const idTarea = $(this).data('id');
+    formComentario.attr("id", idTarea);
+
+    const listaComentarios = $("#lista-comentarios");
+    console.log("borrooo")
+    listaComentarios.html('');
+
+    const comentarios = await obtenerComentarios(idTarea);
+    cantComentGlobal = comentarios.length;
+    if (comentarios) {
+      comentarios.sort(function(a, b) {return a.fechaCreacion - b.fechaCreacion;})
+      console.log(comentarios)
+      comentarios.forEach(function (comentario) {
+
+        const fecha = comentario.fechaCreacion.toDate();
+        const anio = fecha.getFullYear();
+        const mes = fecha.getMonth() + 1; // Se suma 1 ya que los meses van de 0 a 11
+        const dia = fecha.getDate();
+        const hora = fecha.getHours();
+        const minutos = fecha.getMinutes();
+        const segundos = fecha.getSeconds();
+
+        //console.log(comentario.texto)
+        listaComentarios.append(`
+        <p><b>${comentario.email}</b></p>
+        <h5>${comentario.texto}</h5>
+        <p>${"Publicado el día " + dia + "/" + mes + "/" + anio + " a las " + hora + ":" + minutos + ":" + segundos}</p>
+        <div class="border mt-2"></div>`);
+      }
+      )
+
+      
+    }
+
+  });
+
+});
+      
+
+     
+
     });
 
-    const contenedorTareas = $("#contenedor-tareas-mias");
+    const contenedorTareasMias = $("#contenedor-tareas-mias");
     const contenedorTareasTodas = $("#contenedor-tareas-todas");
+
+
+
   } else {
     console.log("sin sesion")
 
@@ -135,6 +245,7 @@ formTareas.submit(function (e) {
   var tituloF = formTareas.find("#titulo-tarea").val();
   var descripcionF = formTareas.find("#descripcion-tarea").val();
   var fechaCreacionF = new Date(); // crear fecha actual
+  var cantComentarios = 0;
   console.log(fechaCreacionF)
 
   if (userGlobal) {
@@ -151,11 +262,76 @@ formTareas.submit(function (e) {
       formTareas.find('#btn-task-form').text('Guardar'); //que el boton diga guardar denuevo
 
     } else {
-      guardarTarea(tituloF, descripcionF, userGlobal.email, fechaCreacionF);
+      guardarTarea(tituloF, descripcionF, userGlobal.email, fechaCreacionF, cantComentarios);
       mostrarMensaje("¡Nueva publicación creada!");
     }
 
     formTareas.trigger('reset');
   }
 });
+
+
+//LLENAR MODAL DE PERFIL
+function llenarModalPerfil(perfil) {
+
+  $("#tituloCard").html("Perfil");
+  $("#nombresCard").html("Nombre: " + perfil.nombres);
+  $("#apellidosCard").html("Apellidos: " + perfil.apellidos);
+  $("#edadCard").html("Edad: " + perfil.edad);
+  $("#sexoCard").html("Sexo: " + perfil.sexo);
+}
+
+
+//EVENTO PARA VER MI PERFIL
+$("#botonPerfil").click(async function () {
+  llenarModalPerfil(await obtenerPerfil(userGlobal.email));
+});
+
+
+//ACCION VER COMENTARIOS
+
+const formComentario = $("#formComentario");
+
+
+ //ACCION COMENTAR
+
+ 
+
+ formComentario.submit(async function (e) {
+   e.preventDefault();
+   var textoComentario = $(this).find("#texto-comentario").val();
+   var fechaCreacionF = new Date(); // crear fecha actual
+   var idTarea = $(this).attr("id");
+
+   if (userGlobal) {
+     console.log("PASOOOOO")
+     guardarComentario(textoComentario, fechaCreacionF, idTarea, userGlobal.email);
+
+     
+     const anio = fechaCreacionF.getFullYear();
+     const mes = fechaCreacionF.getMonth() + 1; // Se suma 1 ya que los meses van de 0 a 11
+     const dia = fechaCreacionF.getDate();
+     const hora = fechaCreacionF.getHours();
+     const minutos = fechaCreacionF.getMinutes();
+     const segundos = fechaCreacionF.getSeconds();
+
+     //console.log(comentario.texto)
+     $("#lista-comentarios").append(`
+     <p><b>${userGlobal.email}</b></p>
+     <h5>${textoComentario}</h5>
+     <p>${"Publicado el día " + dia + "/" + mes + "/" + anio + " a las " + hora + ":" + minutos + ":" + segundos}</p>
+     <div class="border mt-2"></div>`);
+
+
+
+     }
+     cantComentGlobal=cantComentGlobal+1;
+     actualizarTarea(idTarea, {
+       cantComentarios: cantComentGlobal
+     });
+     
+     $(this).trigger('reset');
+   }
+ );
+
 

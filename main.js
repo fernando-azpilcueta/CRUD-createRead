@@ -36,6 +36,9 @@ auth.onAuthStateChanged(async function (user) {
         const tarea = doc.data();
 
         if (tarea.email == correo) {
+
+
+
           const fecha = tarea.fechaCreacion.toDate();
           const anio = fecha.getFullYear();
           const mes = fecha.getMonth() + 1; // Se suma 1 ya que los meses van de 0 a 11
@@ -43,6 +46,15 @@ auth.onAuthStateChanged(async function (user) {
           const hora = fecha.getHours();
           const minutos = fecha.getMinutes();
           const segundos = fecha.getSeconds();
+
+          let textoLike = "";
+          //mi usuario le dio like o no?
+          if (tarea.personasLiked.includes(correo)) {
+            textoLike = "Ya no me gusta";
+          } else {
+            textoLike = "Me gusta";
+          }
+          
           html += `
                     <li class="list-group-item list-group-item-action mt-2">
                       <h5>${tarea.titulo}</h5>
@@ -57,18 +69,18 @@ auth.onAuthStateChanged(async function (user) {
                         <button class="btn btn-danger btn-eliminar bi bi-trash3" data-id="${doc.id}">
                           Eliminar
                         </button>
+                        <button class="btn btn-primary btn-like" data-id="${doc.id}">
+                            ${textoLike}
+                          </button>
                         <button class="btn btn-secondary btn-verComentarios" data-id="${doc.id}" data-bs-toggle="modal" data-bs-target="#modalComentarios">
                             Comentar
                           </button>
+                          <label>${tarea.cantLikes} me gusta(s), </label>
                           <label>${tarea.cantComentarios} comentario(s)</label>
                       </div>
-
                     </li>
-
-                    
-
-
                   `;
+
         }
       });
 
@@ -85,8 +97,13 @@ auth.onAuthStateChanged(async function (user) {
           const minutos = fecha.getMinutes();
           const segundos = fecha.getSeconds();
 
-
-
+          let textoLike = "";
+          //mi usuario le dio like o no?
+          if (tarea.personasLiked.includes(correo)) {
+            textoLike = "Ya no me gusta";
+          } else {
+            textoLike = "Me gusta";
+          }
 
           //const perfil = await obtenerPerfil(tarea.email);
 
@@ -110,18 +127,17 @@ auth.onAuthStateChanged(async function (user) {
                         <p class="text-end"><i>${"Publicado el día " + dia + "/" + mes + "/" + anio + " a las " + hora + ":" + minutos + ":" + segundos}</b></i></p>
                         
                         <div>
-                          <button class="btn btn-primary btn-like" data-id="">
-                            Like
+                          <button class="btn btn-primary btn-like" data-id="${doc.id}">
+                            ${textoLike}
                           </button>
                           <button class="btn btn-secondary btn-verComentarios" data-id="${doc.id}" data-bs-toggle="modal" data-bs-target="#modalComentarios">
                             Comentar
                           </button>
+                          <label>${tarea.cantLikes} me gusta(s), </label>
                           <label>${tarea.cantComentarios} comentario(s)</label>
                           
                         </div>
-                      </li>
-
-                      
+                      </li>        
           `;
 
 
@@ -172,53 +188,98 @@ auth.onAuthStateChanged(async function (user) {
       });
 
 
+      //DAR LIKE
+
+      const btnsLike = $(".btn-like");
+
+      btnsLike.each(function () {
+
+
+        $(this).click(async function () {
+
+          const idTarea = $(this).data('id');
+          const doc = await obtenerTarea(idTarea);
+          const tarea = doc.data();
+
+          if (tarea.personasLiked.includes(correo)) {
+            let personas = tarea.personasLiked;
+            personas.pop(correo);
+
+            let likes = tarea.cantLikes;
+            likes--;
+
+            actualizarTarea(idTarea, {
+              personasLiked: personas,
+              cantLikes: likes
+
+            });
+            
+          } else {
+            let personas = tarea.personasLiked;
+            personas.push(correo);
+
+            let likes = tarea.cantLikes;
+            likes++;
+
+            actualizarTarea(idTarea, {
+              personasLiked: personas,
+              cantLikes: likes
+
+            });
+          }
+        });
+
+      });
+
+      //VER COMENTARIOS
+
       const btnsVerComentarios = $(".btn-verComentarios");
 
-btnsVerComentarios.each(function () {
+      btnsVerComentarios.each(function () {
 
 
-  $(this).click(async function () {
+        $(this).click(async function () {
 
-    const idTarea = $(this).data('id');
-    formComentario.attr("id", idTarea);
+          const idTarea = $(this).data('id');
+          formComentario.attr("id", idTarea);
 
-    const listaComentarios = $("#lista-comentarios");
-    console.log("borrooo")
-    listaComentarios.html('');
+          const listaComentarios = $("#lista-comentarios");
+          console.log("borrooo")
+          listaComentarios.html('');
 
-    const comentarios = await obtenerComentarios(idTarea);
-    cantComentGlobal = comentarios.length;
-    if (comentarios) {
-      comentarios.sort(function(a, b) {return a.fechaCreacion - b.fechaCreacion;})
-      console.log(comentarios)
-      comentarios.forEach(function (comentario) {
+          const comentarios = await obtenerComentarios(idTarea);
+          cantComentGlobal = comentarios.length;
+          if (comentarios) {
+            comentarios.sort(function (a, b) { return a.fechaCreacion - b.fechaCreacion; })
+            console.log(comentarios)
+            comentarios.forEach(function (comentario) {
 
-        const fecha = comentario.fechaCreacion.toDate();
-        const anio = fecha.getFullYear();
-        const mes = fecha.getMonth() + 1; // Se suma 1 ya que los meses van de 0 a 11
-        const dia = fecha.getDate();
-        const hora = fecha.getHours();
-        const minutos = fecha.getMinutes();
-        const segundos = fecha.getSeconds();
+              const fecha = comentario.fechaCreacion.toDate();
+              const anio = fecha.getFullYear();
+              const mes = fecha.getMonth() + 1; // Se suma 1 ya que los meses van de 0 a 11
+              const dia = fecha.getDate();
+              const hora = fecha.getHours();
+              const minutos = fecha.getMinutes();
+              const segundos = fecha.getSeconds();
 
-        //console.log(comentario.texto)
-        listaComentarios.append(`
+              //console.log(comentario.texto)
+              listaComentarios.append(`
         <p><b>${comentario.email}</b></p>
         <h5>${comentario.texto}</h5>
         <p>${"Publicado el día " + dia + "/" + mes + "/" + anio + " a las " + hora + ":" + minutos + ":" + segundos}</p>
         <div class="border mt-2"></div>`);
-      }
-      )
+            }
+            )
 
-      
-    }
 
-  });
+          }
 
-});
-      
+        });
 
-     
+      });
+
+
+
 
     });
 
@@ -246,6 +307,8 @@ formTareas.submit(function (e) {
   var descripcionF = formTareas.find("#descripcion-tarea").val();
   var fechaCreacionF = new Date(); // crear fecha actual
   var cantComentarios = 0;
+  var cantLikes = 0;
+  var personasLiked = [];
   console.log(fechaCreacionF)
 
   if (userGlobal) {
@@ -262,7 +325,7 @@ formTareas.submit(function (e) {
       formTareas.find('#btn-task-form').text('Guardar'); //que el boton diga guardar denuevo
 
     } else {
-      guardarTarea(tituloF, descripcionF, userGlobal.email, fechaCreacionF, cantComentarios);
+      guardarTarea(tituloF, descripcionF, userGlobal.email, fechaCreacionF, cantComentarios, cantLikes, personasLiked);
       mostrarMensaje("¡Nueva publicación creada!");
     }
 
@@ -293,30 +356,30 @@ $("#botonPerfil").click(async function () {
 const formComentario = $("#formComentario");
 
 
- //ACCION COMENTAR
+//ACCION COMENTAR
 
- 
 
- formComentario.submit(async function (e) {
-   e.preventDefault();
-   var textoComentario = $(this).find("#texto-comentario").val();
-   var fechaCreacionF = new Date(); // crear fecha actual
-   var idTarea = $(this).attr("id");
 
-   if (userGlobal) {
-     console.log("PASOOOOO")
-     guardarComentario(textoComentario, fechaCreacionF, idTarea, userGlobal.email);
+formComentario.submit(async function (e) {
+  e.preventDefault();
+  var textoComentario = $(this).find("#texto-comentario").val();
+  var fechaCreacionF = new Date(); // crear fecha actual
+  var idTarea = $(this).attr("id");
 
-     
-     const anio = fechaCreacionF.getFullYear();
-     const mes = fechaCreacionF.getMonth() + 1; // Se suma 1 ya que los meses van de 0 a 11
-     const dia = fechaCreacionF.getDate();
-     const hora = fechaCreacionF.getHours();
-     const minutos = fechaCreacionF.getMinutes();
-     const segundos = fechaCreacionF.getSeconds();
+  if (userGlobal) {
+    console.log("PASOOOOO")
+    guardarComentario(textoComentario, fechaCreacionF, idTarea, userGlobal.email);
 
-     //console.log(comentario.texto)
-     $("#lista-comentarios").append(`
+
+    const anio = fechaCreacionF.getFullYear();
+    const mes = fechaCreacionF.getMonth() + 1; // Se suma 1 ya que los meses van de 0 a 11
+    const dia = fechaCreacionF.getDate();
+    const hora = fechaCreacionF.getHours();
+    const minutos = fechaCreacionF.getMinutes();
+    const segundos = fechaCreacionF.getSeconds();
+
+    //console.log(comentario.texto)
+    $("#lista-comentarios").append(`
      <p><b>${userGlobal.email}</b></p>
      <h5>${textoComentario}</h5>
      <p>${"Publicado el día " + dia + "/" + mes + "/" + anio + " a las " + hora + ":" + minutos + ":" + segundos}</p>
@@ -324,14 +387,14 @@ const formComentario = $("#formComentario");
 
 
 
-     }
-     cantComentGlobal=cantComentGlobal+1;
-     actualizarTarea(idTarea, {
-       cantComentarios: cantComentGlobal
-     });
-     
-     $(this).trigger('reset');
-   }
- );
+  }
+  cantComentGlobal = cantComentGlobal + 1;
+  actualizarTarea(idTarea, {
+    cantComentarios: cantComentGlobal
+  });
+
+  $(this).trigger('reset');
+}
+);
 
 

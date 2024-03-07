@@ -33,8 +33,8 @@ export const db = getFirestore();
 // COLECTION: TAREAS
 
 //Guardar una tarea nueva en Firebase
-export function guardarTarea(titulo, descripcion, email,fechaCreacion,cantComentarios) {
-  addDoc(collection(db, "tareas"), { titulo, descripcion, email,fechaCreacion,cantComentarios});
+export function guardarTarea(titulo, descripcion, email,fechaCreacion,cantComentarios, cantLikes, personasLiked) {
+  addDoc(collection(db, "tareas"), { titulo, descripcion, email,fechaCreacion,cantComentarios,cantLikes,personasLiked});
 }
 //Obtener todas las tareas guardadas en Firebase
 export function obtenerTareas() {
@@ -88,5 +88,6 @@ export async function obtenerComentarios(idTarea){
   console.log('holi')
   return querySnapshot.docs.map(doc => doc.data());
 }
+
 
 
